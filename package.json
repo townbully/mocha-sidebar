@@ -1,9 +1,9 @@
 {
-    "name": "vscode-mocha-sidebar",
-    "displayName": "Mocha sidebar",
+    "name": "vscode-mocha-sidebar-fork",
+    "displayName": "Mocha Sidebar Fork",
     "description": "Mocha side bar is the most complete extension for mocha testing, based on not maintained mocha extension , have fun :)",
-    "version": "0.20.18",
-    "publisher": "maty",
+    "version": "0.20.22",
+    "publisher": "townbully",
     "engines": {
         "vscode": "^0.10.1"
     },
@@ -15,7 +15,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/maty21/mocha-sidebar.git"
+        "url": "https://github.com/townbully/mocha-sidebar.git"
     },
     "bugs": "https://github.com/maty21/mocha-sidebar/issues/",
     "homepage": "https://github.com/maty21/mocha-sidebar/blob/master/README.md",
@@ -391,6 +391,7 @@
         "nyc": "^11.7.3",
         "rimraf": "^2.6.2",
         "split-lines": "^1.1.0",
-        "stacktrace-parser": "^0.1.4"
+        "stacktrace-parser": "^0.1.4",
+        "vsce": "^1.48.0"
     }
 }
