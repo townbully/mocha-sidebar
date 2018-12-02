@@ -4,7 +4,8 @@ const TYPES =
 {
     "result":'result',
     "error":"error",
-    "exit":"exit"
+    "exit":"exit",
+    "info":"info"
 } 
 
 

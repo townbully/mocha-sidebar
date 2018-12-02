@@ -111,6 +111,7 @@ class mochaProvider {
         if (!element) {
             return nodes;
         }
+        let describerItem = undefined;
         Object.entries(element).forEach(item => {
             if (item[0] == "meta") {
                 return
@@ -126,13 +127,16 @@ class mochaProvider {
                 }
                 console.log(`name:${item[1].__test.name},file:${item[1].__test.file}`);
                 let mItem = new mochaItem(item[1].__test.name, vscode.TreeItemCollapsibleState.None, 'testItem', iconPath, item[1], 0);
+                item[1].__test.mItem = mItem; //describerItem;                
                 setDecorationOnUpdateResults(status, mItem);
+
                 this.currentResultWithItem.push({ status, test: item[1].__test, type: "test" })
                 return nodes.push(mItem);
             }
             else {
                 let name = item[0];
                 let i = new mochaItem(name, vscode.TreeItemCollapsibleState.Expanded, 'testDescriber', null, item[1], 0);
+                describerItem = i;
                 return nodes.push(i);
             }
         })
@@ -175,14 +179,15 @@ class mochaProvider {
         return element.suitePath[hierarchyLevel].replace(element.suitePath[hierarchyLevel - 1], "").trimLeft();
     }
     async runAllTests(element) {
-        clearData();
-        let tests = []
-        this._findObjectByLabel(element, '__test', tests);
-        let log = {};
-        this.results = await this.runMochaTests(tests, null, null)
-        this.results.ranTests = tests;
-        this._onDidChangeTreeData.fire(this.item);
-        console.log('tests');
+        // clearData();
+        // let tests = []
+        // this._findObjectByLabel(element, '__test', tests);
+        // let log = {};
+        // this.results = await this.runMochaTests(tests, null, null)
+        // this.results.ranTests = tests;
+        // this._onDidChangeTreeData.fire(this.item);
+        // console.log('tests');
+        return await this.runDescriberLevelTest(element);
     }
     hookResultsFromCommands(results){
         this.results =results;
@@ -198,7 +203,21 @@ class mochaProvider {
         for (let test of tests) {
             let result = await this.runMochaTests([test], `^${escapeRegExp(test.fullName)}$`)
             results.push(result);
+
+            let status = consts.NOT_RUN;
+            if (result.passed.length) {
+                status=  consts.PASSED;
+            } else {
+                status =  consts.FAILED;
+            }
+            test.mItem.iconPath = this._setPassOrFailIcon(status);
+            this._onDidChangeTreeData.fire(test.mItem);
         }
+
+        this.results = this._combinedResults(results);    
+        this.results.ranTests = tests;
+        this._onDidChangeTreeData.fire(this.item);
+
         // let combinedResults = {
         //     passed: [],
         //     failed: []
@@ -211,10 +230,10 @@ class mochaProvider {
         //         res.failed.forEach(r => combinedResults.failed.push(r))
         //     }
         // })
-        this.results = this._combinedResults(results);
-        this.results.ranTests = tests;
+        // this.results = this._combinedResults(results);
+        // this.results.ranTests = tests;
 
-        this._onDidChangeTreeData.fire(this.item);
+        //this._onDidChangeTreeData.fire(this.item);
         // tests .forEach(async test => {
         // })
         // let results = await Promise.all(promiseArray);

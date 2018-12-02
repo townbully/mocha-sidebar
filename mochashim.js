@@ -23,7 +23,7 @@ const envWithNodePath = (rootPath) => {
 
 function mochaPath(rootPath) {
   const mochaPath = resolve(rootPath + "/" + config.mochaPath());
-  console.log('mochaPath:' + mochaPath);
+  //console.log('mochaPath:' + mochaPath);
   return mochaPath || config.mochaPath();
 }
 
@@ -90,7 +90,7 @@ const forkFindTests = (rootPath) => {
     `);
   
   //findingTestLogs();
-  outputChannel.show();
+  //outputChannel.show();
 
   return forkWorker('../worker/findtests.js', args, rootPath);
 
@@ -163,23 +163,40 @@ const createError = (errorText) => {
 }
 
 
-const handleProcessMessages = async (process) => {
+const handleProcessMessages = async (proc) => {
   return new Promise((resolve, reject) => {
-    let msg = message(process);
+            
+    let msg = message(proc);
     let processMessage = null;
-    msg.on(TYPES.result, data => {
-      processMessage = data;
-      console.log(data);
-    })
-    process.stdout.on('data', data => {
+    proc.stdout.on('data', data => {
       if (config.logVerbose()) {
         outputChannel.appendLine(data.toString())
-
       }
     });
+    proc.stderr.on('data', data => {
+      if (config.logVerbose()) {
+        outputChannel.appendLine(data.toString())
+        //outputChannel.show();
+      }
+    });
+
+    msg.on(TYPES.info, data => {      
+      console.log(data.toString());      
+    })
+    msg.on(TYPES.result, data => {
+      processMessage = data;
+      if (config.logVerbose()) {      
+        console.log(data);
+      }
+    })
+
     msg.on('error', err => {
-      let error = JSON.parse(err);
-      handleError(error, reject)
+      if(typeof err === 'string' )  {
+        let error = JSON.parse(err);
+        handleError(error, reject);
+      } else {
+        handleError(err, reject);
+      }
     })
     msg.on('exit', async code => {
       if (processMessage) {
@@ -217,13 +234,21 @@ const findTests = async (rootPath) => {
   // Allow the user to choose a different subfolder
   outputChannel.appendLine(`Finding tests in "${rootPath}"\n`);
   rootPath = applySubdirectory(rootPath);
-  outputChannel.appendLine(`Finding tests in "${rootPath}"\n`);
 
-  console.log(`Finding tests in "${rootPath}"\n`);
+  //console.log(`Finding tests in "${rootPath}"\n`);
 
-  let process = await forkFindTests(rootPath)
+  let proc = await forkFindTests(rootPath)
 
-  let data = await handleProcessMessages(process)
+  // proc.stderr.on('data', (data) => {
+  //   appendMessagesToOutput(""+data);
+  // });
+
+
+  // proc.stdout.on('data', (data) => {
+  //   appendMessagesToOutput(""+data);
+  // });  
+
+  let data = await handleProcessMessages(proc)
   return data;
 
 }

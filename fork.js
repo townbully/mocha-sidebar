@@ -17,8 +17,7 @@ function fork(jsPath, args, options) {
   // Make sure mocha is executed in the right folder
   options.cwd = path.dirname(options.env.NODE_PATH);
   options.stdio = ['pipe', 'pipe', 'pipe', 'ipc'];
-
-
+  //options.stdio = ['inherit', 'inherit', 'inherit', 'ipc'];
 
   return nodeJSPath().then(
     execPath => new Promise((resolve, reject) => {
