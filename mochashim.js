@@ -10,7 +10,10 @@ const _findTestsInProcess = require('./inProcess/findtestsInProccess');
 const verboseLog = require('./provider-extensions/constLog');
 const outputChannel = vscode.window.createOutputChannel('sideBar-Mocha');
 const coverage = require('./lib/coverage/code-coverage');
-const { message, TYPES } = require('./worker/process-communication');
+const {
+  message,
+  TYPES
+} = require('./worker/process-communication');
 // will notify once on error 
 let IsErrorShown = false;
 const resolve = require('path').resolve;
@@ -23,7 +26,6 @@ const envWithNodePath = (rootPath) => {
 
 function mochaPath(rootPath) {
   const mochaPath = resolve(rootPath + "/" + config.mochaPath());
-  //console.log('mochaPath:' + mochaPath);
   return mochaPath || config.mochaPath();
 }
 
@@ -65,7 +67,6 @@ test runs with those args:
   `)
 
   }
-  //outputChannel.appendLine(`mocha path : ${config.mochaPath()}`);
   return forkWorker('../worker/runtest.js', args, rootPath);
 }
 
@@ -78,6 +79,16 @@ const forkFindTests = (rootPath) => {
     mochaPath: mochaPath(rootPath)
   };
 
+  if (config.logVerbose()) {
+    findingTestLogs(rootPath, args);
+  }
+  return forkWorker('../worker/findtests.js', args, rootPath);
+}
+
+const findingTestLogs = (rootPath, args) => {
+  outputChannel.clear();
+  outputChannel.appendLine(`____________________________________________________________________________`);
+  outputChannel.appendLine(`trying to searching for tests using these settings: `);
   outputChannel.appendLine(`
   find tests with these args:
     options: ${JSON.stringify(config.options())},
@@ -87,23 +98,7 @@ const forkFindTests = (rootPath) => {
     files to ignore: ${config.files().ignore}
     environmets: ${ JSON.stringify(config.env())}
     requires: ${JSON.stringify(config.requires())}
-    `);
-  
-  //findingTestLogs();
-  //outputChannel.show();
-
-  return forkWorker('../worker/findtests.js', args, rootPath);
-
-}
-
-const findingTestLogs = () => {
-  outputChannel.clear();
-  outputChannel.appendLine(`____________________________________________________________________________`);
-  outputChannel.appendLine(`trying to searching for tests using these settings: `);
-  outputChannel.appendLine(`
-    mocha path: ${config.mochaPath()}
-
-`);
+  `);
   outputChannel.appendLine(`if you find anything wrong please change those default settings`)
   outputChannel.appendLine(`____________________________________________________________________________`);
   // vscode.window.showErrorMessage(`Failed to run Mocha due to`,'learnMorePanel').then(val=>{
@@ -117,7 +112,9 @@ const forkWorker = (workerPath, argsObject, rootPath) => {
   argsObject.requires = config.requires();
   argsObject.rootPath = rootPath;
   const argsString = JSON.stringify(argsObject);
-  const options = { env: envWithNodePath(rootPath) };
+  const options = {
+    env: envWithNodePath(rootPath)
+  };
   return fork(jsPath, [argsString], options);
 }
 
@@ -134,17 +131,17 @@ const handleError = (err, reject) => {
     "   ${err.message}  " 
   error trace can be found in the ouput channel .
     for more help:`, qa, gitter).then(val => {
-        switch (val) {
-          case qa:
-            vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://github.com/maty21/mocha-sidebar#qa'));
-            break;
-          case gitter:
-            vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://gitter.im/mocha-sidebar/Questions'));
-            break;
+      switch (val) {
+        case qa:
+          vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://github.com/maty21/mocha-sidebar#qa'));
+          break;
+        case gitter:
+          vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://gitter.im/mocha-sidebar/Questions'));
+          break;
           // default:
           // vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://github.com/maty21/mocha-sidebar'))
-        }
-      });
+      }
+    });
     outputChannel.show();
     reject(err);
   }
@@ -165,7 +162,7 @@ const createError = (errorText) => {
 
 const handleProcessMessages = async (proc) => {
   return new Promise((resolve, reject) => {
-            
+
     let msg = message(proc);
     let processMessage = null;
     proc.stdout.on('data', data => {
@@ -180,18 +177,17 @@ const handleProcessMessages = async (proc) => {
       }
     });
 
-    msg.on(TYPES.info, data => {      
-      console.log(data.toString());      
+    msg.on(TYPES.info, data => {
+      console.log(data.toString());
     })
     msg.on(TYPES.result, data => {
       processMessage = data;
-      if (config.logVerbose()) {      
-        console.log(data);
-      }
+      //outputChannel.appendLine(data.toString());
+      //console.log(data);
     })
 
     msg.on('error', err => {
-      if(typeof err === 'string' )  {
+      if (typeof err === 'string') {
         let error = JSON.parse(err);
         handleError(error, reject);
       } else {
@@ -232,10 +228,10 @@ const runTests = async (testFiles, grep, messages) => {
 
 const findTests = async (rootPath) => {
   // Allow the user to choose a different subfolder
-  outputChannel.appendLine(`Finding tests in "${rootPath}"\n`);
+  if (config.logVerbose()) {
+    outputChannel.appendLine(`Finding tests in "${rootPath}"\n`);
+  }
   rootPath = applySubdirectory(rootPath);
-
-  //console.log(`Finding tests in "${rootPath}"\n`);
 
   let proc = await forkFindTests(rootPath)
 
@@ -258,4 +254,4 @@ module.exports = {
   runTests,
   findTests,
   outputChannel,
-} 
+}
