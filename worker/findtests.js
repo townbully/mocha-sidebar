@@ -59,12 +59,12 @@ if (Mocha) {
     }
   }
   createMocha(args.rootPath, args.options, args.files.glob, args.files.ignore)
-    .then(mocha => crawlTests(mocha.suite))
+    .then(suite => crawlTests(suite))
     .then(tests => {
       setTimeout(() => {
         msg.emit(TYPES.result, 'timeout sending to parent process. Exiting');
         process.exit(-1);
-      }, 30000)
+      }, 90000)
 
       msg.emit(TYPES.result, tests, error => {
         if (error) {
@@ -112,13 +112,28 @@ function createMocha(rootPath, options, glob, ignore) {
         ShowError(`??`, err);
         return reject(err);
       }
-
+      
       try {
-        const mocha = new Mocha(options);
-        files.forEach(file => mocha.addFile(path.resolve(rootPath, file)));
-        console.log('Trying to load mocha files:', mocha.files);
-        mocha.loadFiles();
-        resolve(mocha);
+        const okayTests = [];
+        const suites = [];
+        const tests = [];
+      
+        files.forEach(file => {
+          try {
+            const mochaTest = new Mocha(options);          
+            const fpath = path.resolve(rootPath, file);
+            mochaTest.addFile(fpath);
+            mochaTest.loadFiles();
+            okayTests.push(fpath);
+            suites.push(...mochaTest.suite.suites);
+            tests.push(...mochaTest.suite.tests);
+          } catch(ex) {
+            ShowError('problem loading this test', file, ex);            
+          }
+        });
+
+        console.log('Loaded these files:', okayTests);        
+        resolve({fullTitle: () => "", tests, suites});
       } catch (ex) {
         ShowError(`Couldn't load mocha files:`, ex);
         reject(ex);
