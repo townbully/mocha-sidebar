@@ -1,5 +1,4 @@
 'use strict';
-
 const config = require('./config');
 const fork = require('./fork');
 const path = require('path');
@@ -195,13 +194,15 @@ const handleProcessMessages = async (proc) => {
       }
     })
     msg.on('exit', async code => {
-      if (processMessage) {
-        if (code) {
+   //   if (processMessage) {
+        if (code!=0) {
           reject(createError('Process exited with code ' + code));
           return;
         }
-        resolve(processMessage);
-      }
+        else {
+          resolve(processMessage);
+        }
+    //  }
     });
   });
 }
