@@ -141,10 +141,10 @@ const debugItem = async (element, functionOnTerminate) => {
 
     callFunctionOnTerminate = functionOnTerminate.bind(_provider);
     currentElement = element;
-    let glob = config.files().glob || "./test/**/*.js";
-    mochaTest.args = [glob, '--grep', `^${escapeStringRegexp(element.item.__test.fullName)}$`]
+    mochaTest.args = [element.item.__test.file, '--grep', `^${escapeStringRegexp(element.item.__test.fullName)}$`]
     mochaTest.args = addRequires(mochaTest.args);
     mochaTest.args = addOptions(mochaTest.args);
+
     mochaTest.cwd = applySubdirectory(vscode.workspace.rootPath);
     mochaTest.env = config.env();
     //  let reg = new RegExp(`^${element.item.test.fullName}$`)
